@@ -22,61 +22,68 @@
 			int auc_id = Integer.parseInt(request.getParameter("auc_id"));
 			float bid_limit = Float.parseFloat(request.getParameter("bid_limit"));
 			float bid_inc = Float.parseFloat(request.getParameter("bid_inc"));
-			String username = (String) session.getAttribute("username");
+			String username = (String) session.getAttribute("usern");
 			
 			//query to get auction information
-			String query = "SELECT auction_id, price, bid_inc FROM auctions WHERE auction_id = " + auc_id;
+			String query = "SELECT auctionID, currentPrice, bidIncrement FROM auction WHERE auctionID = " + auc_id;
 			ResultSet result = stmt.executeQuery(query);
 			
 			//query to check if bid already exists
-			String query2 = "SELECT auction_id, username FROM auto_bids WHERE auction_id =" + auc_id + " AND username = '" + username + "'";
+			String query2 = "SELECT auctionID, username, bidLimit, bidIncrement FROM auto_bid WHERE auctionID =" + auc_id + " AND username = '" + username + "'";
 			ResultSet result2 = stmt2.executeQuery(query2);
 			
-			if (result2.next()) { //if bid already exists
-				%>
-				<br>
-				You've Already Set A Bid On This Auction.
-				<br>
-				<form method = "post" action = "AutoBid.jsp">
-				<input type = "submit" value = "Go back">
-				</form>
-				<%	
-			} else if (!result.next()) { //if auction does not exist
+			if (!result.next()) { //if auction does not exist
 				
 				%>
 				<br>
 				That Auction Does Not Exist.
 				<br>
-				<form method = "post" action = "AutoBid.jsp">
+				<form method = "post" action = "EndUserCustomer.jsp">
 				<input type = "submit" value = "Go back">
 				</form>
 				<%		
-				
-			} else if (bid_limit <= result.getFloat("price")) { //if bid limit is below price
+				 
+				//if bid limit is below or equal to price + increment
+			} else if (bid_limit <= result.getFloat("currentPrice") + result.getFloat("bidIncrement")) {
 				
 				%>
 				<br>
 				Bid Limit Is Too Low.
 				<br>
-				<form method = "post" action = "AutoBid.jsp">
+				<form method = "post" action = "EndUserCustomer.jsp">
 				<input type = "submit" value = "Go back">
 				</form>
 				<%
 				
-			} else if (bid_inc < result.getFloat("bid_inc")) { //if bid increment is less than minimum increment
+			} else if (bid_inc < result.getFloat("bidIncrement")) { //if bid increment is less than minimum increment
 				
 				%>
 				<br>
 				Bid Increment Is Too Low.
 				<br>
-				<form method = "post" action = "AutoBid.jsp">
+				<form method = "post" action = "EndUserCustomer.jsp">
 				<input type = "submit" value = "Go back">
 				</form>
 				<%
 				
+			} else if (result2.next()) { //if bid already exists then update
+				
+				String update = "UPDATE auto_bid SET bidLimit = '" + bid_limit + "', bidIncrement = '" + bid_inc + "' WHERE auctionID = " + auc_id + " AND username = '" + username + "'";
+				Statement updateStmt = con.createStatement();
+				updateStmt.executeUpdate(update);
+				
+				%>
+				<br>
+				Your Bid Was Updated.
+				<br>
+				<form method = "post" action = "EndUserCustomer.jsp">
+				<input type = "submit" value = "Go back">
+				</form>
+				<%	
+				
 			} else { //add auto bid
 				
-				String add = "insert into auto_bids values (" + auc_id + ",'" + username + "'," + bid_limit + "," + bid_inc + ")";
+				String add = "insert into auto_bid values ('" + username + "'," + auc_id + "," + bid_limit + "," + bid_inc + ")";
 				PreparedStatement ps = con.prepareStatement(add);
 				int r = ps.executeUpdate();
 				
@@ -90,7 +97,7 @@
 				
 				%>
 				<br>
-				<form method = "post" action = "AutoBid.jsp">
+				<form method = "post" action = "EndUserCustomer.jsp">
 				<input type = "submit" value = "Go back">
 				</form>
 				<%
