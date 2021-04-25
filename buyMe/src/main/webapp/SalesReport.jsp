@@ -30,9 +30,9 @@
 				"SELECT i.name name, i.category cat FROM item i, auction a, sells s " + 
 				"WHERE i.itemID=s.itemID AND s.auctionID=a.auctionID " +
 				"AND (closingDate=curdate() AND closingTime < curtime()) " +
-				"OR closingDate > curdate() " +
+				"OR closingDate < curdate() " +
 				"GROUP BY i.name, i.category " +
-				"ORDER BY count(*) DESC " +
+				"ORDER BY SUM(a.currentPrice) DESC " +
 				"LIMIT 5;";
 			//out.print(bsQuery);
 			ResultSet bestSellers = stmt.executeQuery(bsQuery);
@@ -70,14 +70,15 @@
 		try{
 			Statement stmt = con.createStatement();
 			String usersQuery =
-				"SELECT acc.username name FROM account acc, auction auc, winner w " + 
-				"WHERE acc.username=w.username AND w.auctionID=auc.auctionID " +
+				"SELECT acc.username name FROM account acc, auction auc, creates c " + 
+				"WHERE acc.username=c.username AND c.auctionID=auc.auctionID " +
 				"AND (closingDate=curdate() AND closingTime < curtime()) " +
 				"OR closingDate > curdate() " +
+				"AND acc.type='user' " +
 				"GROUP BY acc.username " +
-				"ORDER BY count(*) DESC " +
+				"ORDER BY SUM(auc.currentPrice) DESC " +
 				"LIMIT 5;";
-			//out.print(bsQuery);
+			//out.print(usersQuery);
 			ResultSet bestUsers = stmt.executeQuery(usersQuery);
 			%>
 		
@@ -107,16 +108,16 @@
 		<table>
 			<tr>
 				<th
-				style="width:250px;font:16px/26px Georgia, Garamond, Serif;">
+				style="width:150px;font:16px/26px Georgia, Garamond, Serif;">
 				Item</th>
 				<th
-				style="width:250px;font:16px/26px Georgia, Garamond, Serif;">
+				style="width:150px;font:16px/26px Georgia, Garamond, Serif;">
 				Earnings</th>
 			</tr>
 		</table>
 			
 		<div
-		style="height:100px;width:500px;border:1px solid #ccc;overflow:auto;">
+		style="height:100px;width:300px;border:1px solid #ccc;overflow:auto;">
 		<%
 		try{
 			Statement stmt = con.createStatement();
@@ -124,10 +125,10 @@
 				"SELECT i.name name, SUM(a.currentPrice) earnings FROM item i, auction a, sells s " + 
 				"WHERE i.itemID=s.itemID AND s.auctionID=a.auctionID " +
 				"AND (closingDate=curdate() AND closingTime < curtime()) " +
-				"OR closingDate > curdate() " +
-				"GROUP BY i.name, SUM(a.currentPrice) " +
+				"OR closingDate < curdate() " +
+				"GROUP BY i.name " +
 				"ORDER BY SUM(a.currentPrice) DESC;";
-			//out.print(auctionQuery);
+			//out.print(itemEarningsQuery);
 			ResultSet itemEarnings = stmt.executeQuery(itemEarningsQuery);
 			%>
 		
@@ -136,10 +137,12 @@
 			while(itemEarnings.next()){
 				%>
 				<tr>
-					<th>
+					<th
+					style="width:150px;">
 					<%=itemEarnings.getString("name")%>
 					</th>
-					<th>
+					<th
+					style="width:150px;">
 					<%=itemEarnings.getString("earnings")%>
 					</th>
 				</tr>
@@ -160,39 +163,42 @@
 		<table>
 			<tr>
 				<th
-				style="width:250px;font:16px/26px Georgia, Garamond, Serif;">
+				style="width:150px;font:16px/26px Georgia, Garamond, Serif;">
 				Item</th>
 				<th
-				style="width:250px;font:16px/26px Georgia, Garamond, Serif;">
+				style="width:150px;font:16px/26px Georgia, Garamond, Serif;">
 				Earnings</th>
 			</tr>
 		</table>
 			
 		<div
-		style="height:100px;width:500px;border:1px solid #ccc;overflow:auto;">
+		style="height:100px;width:300px;border:1px solid #ccc;overflow:auto;">
 		<%
 		try{
 			Statement stmt = con.createStatement();
-			String itemEarningsQuery =
-				"SELECT i.category category, SUM(a.currentPrice) sum FROM item i, auction a, sells s " + 
+			String catEarningsQuery =
+				"SELECT i.category cat, SUM(a.currentPrice) earnings FROM item i, auction a, sells s " + 
 				"WHERE i.itemID=s.itemID AND s.auctionID=a.auctionID " +
-				"AND a.closingDate <= curdate() AND a.closingTime < curtime() " +
+				"AND (closingDate=curdate() AND closingTime < curtime()) " +
+				"OR closingDate < curdate() " +
 				"GROUP BY i.category " +
 				"ORDER BY SUM(a.currentPrice) DESC;";
-			//out.print(auctionQuery);
-			ResultSet itemEarnings = stmt.executeQuery(itemEarningsQuery);
+			//out.print(catEarningsQuery);
+			ResultSet catEarnings = stmt.executeQuery(catEarningsQuery);
 			%>
 		
 			<table>
 			<%
-			while(itemEarnings.next()){
+			while(catEarnings.next()){
 				%>
 				<tr>
-					<th>
-					<%=itemEarnings.getString("name")%>
+					<th
+					style="width:150px;">
+					<%=catEarnings.getString("cat")%>
 					</th>
-					<th>
-					<%=itemEarnings.getString("earnings")%>
+					<th
+					style="width:150px;">
+					<%=catEarnings.getString("earnings")%>
 					</th>
 				</tr>
 			<%
@@ -212,40 +218,43 @@
 		<table>
 			<tr>
 				<th
-				style="width:250px;font:16px/26px Georgia, Garamond, Serif;">
+				style="width:150px;font:16px/26px Georgia, Garamond, Serif;">
 				Item</th>
 				<th
-				style="width:250px;font:16px/26px Georgia, Garamond, Serif;">
+				style="width:150px;font:16px/26px Georgia, Garamond, Serif;">
 				Earnings</th>
 			</tr>
 		</table>
 			
 		<div
-		style="height:100px;width:500px;border:1px solid #ccc;overflow:auto;">
+		style="height:100px;width:300px;border:1px solid #ccc;overflow:auto;">
 		<%
 		try{
 			Statement stmt = con.createStatement();
-			String itemEarningsQuery =
-				"SELECT i.name name, SUM(a.currentPrice) earnings FROM item i, auction a, sells s " + 
-				"WHERE i.itemID=s.itemID AND s.auctionID=a.auctionID " +
+			String userEarningsQuery =
+				"SELECT acc.username name, SUM(auc.currentPrice) earnings " +
+				"FROM auction auc, creates c, account acc " + 
+				"WHERE c.auctionID=auc.auctionID AND c.username=acc.username " +
 				"AND (closingDate=curdate() AND closingTime < curtime()) " +
-				"OR closingDate > curdate() " +
-				"GROUP BY i.name, SUM(a.currentPrice) " +
-				"ORDER BY SUM(a.currentPrice) DESC;";
-			//out.print(auctionQuery);
-			ResultSet itemEarnings = stmt.executeQuery(itemEarningsQuery);
+				"OR closingDate < curdate() " +
+				"GROUP BY acc.username " +
+				"ORDER BY SUM(auc.currentPrice) DESC;";
+			//out.print(userEarningsQuery);
+			ResultSet userEarnings = stmt.executeQuery(userEarningsQuery);
 			%>
 		
 			<table>
 			<%
-			while(itemEarnings.next()){
+			while(userEarnings.next()){
 				%>
 				<tr>
-					<th>
-					<%=itemEarnings.getString("name")%>
+					<th
+					style="width:150px;">
+					<%=userEarnings.getString("name")%>
 					</th>
-					<th>
-					<%=itemEarnings.getString("earnings")%>
+					<th
+					style="width:150px;">
+					<%=userEarnings.getString("earnings")%>
 					</th>
 				</tr>
 			<%
@@ -265,12 +274,14 @@
 		<%
 		try{
 			Statement stmt = con.createStatement();
-			String itemEarningsQuery =
+			String earningsQuery =
 				"SELECT SUM(currentPrice) sum FROM auction " + 
-				"WHERE closingDate <= curdate() AND closingTime < curtime();";
-			out.print(auctionQuery);
-			ResultSet itemEarnings = stmt.executeQuery(itemEarningsQuery);
-			%><h1>Total Earnings: $</h1><%
+				"WHERE (closingDate=curdate() AND closingTime < curtime()) " +
+				"OR closingDate < curdate();";
+			//out.print(earningsQuery);
+			ResultSet earnings = stmt.executeQuery(earningsQuery);
+			earnings.next();
+			%><h1>Total Earnings: $<%=earnings.getString("sum")%></h1><%
 		}
 		catch(Exception e){
 			out.print("Problem loading total earnings.");
