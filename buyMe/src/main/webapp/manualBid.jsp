@@ -38,7 +38,7 @@
 			String givenBidPrice = request.getParameter("bidPrice");
 			float bidPrice = Float.parseFloat(givenBidPrice);
 			
-			//get the highest bid number and add 1 to create a new AuctionID.  
+			//get the highest bid number and add 1 to create a new bidID.  
 			String str = "SELECT max(bidID) as f FROM manual_bid"; 
 			ResultSet result = stmt.executeQuery(str);
 			result.next(); 
